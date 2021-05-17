@@ -1,13 +1,15 @@
 #include "flmanager.h"
 #include <string>
 
-BOOL MoveMouse(int dx, int dy) {
+BOOL MoveMouse(int dx, int dy) 
+{
 	POINT p;
 	if (!GetCursorPos(&p)) { return FALSE; }
 	return SetCursorPos(p.x + dx, p.y + dy);
 }
 
-BOOL Click() {
+BOOL Click() 
+{
 	INPUT inputs[2] = { 0 };
 
 	inputs[0].type = INPUT_MOUSE;
@@ -19,7 +21,8 @@ BOOL Click() {
 	return (SendInput(2, inputs, sizeof(INPUT)) == 2);
 }
 
-BOOL SendKeystrokes(WORD* keys, int numKeys) {
+BOOL SendKeystrokes(const WORD* keys, int numKeys) 
+{
 	BOOL success = true;
 
 	for (int i = 0; i < numKeys; i++) {
@@ -40,12 +43,35 @@ BOOL SendKeystrokes(WORD* keys, int numKeys) {
 	return (success);
 }
 
-BOOL SendKeystroke(WORD key) {
-	WORD keys[1] = { key };
-	return SendKeystrokes(keys, 1);
+BOOL SendKeystrokesSimul(const WORD* keys, int numKeys)
+{
+	BOOL success = true;
+
+	for (int i = 0; i < numKeys; i++) {
+		INPUT in;
+
+		in.type = INPUT_KEYBOARD;
+		in.ki.wVk = keys[i];
+		in.ki.wScan = 0; in.ki.time = 0; in.ki.dwExtraInfo = 0;
+		in.ki.dwFlags = 0;
+		success = success & SendInput(1, &in, sizeof(INPUT));
+	}
+
+	for (int i = 0; i < numKeys; i++) {
+		INPUT in;
+
+		in.type = INPUT_KEYBOARD;
+		in.ki.wVk = keys[i];
+		in.ki.wScan = 0; in.ki.time = 0; in.ki.dwExtraInfo = 0;
+		in.ki.dwFlags = KEYEVENTF_KEYUP;
+		success = success & SendInput(1, &in, sizeof(INPUT));
+	}
+
+	return success;
 }
 
-namespace FL {
+namespace FL 
+{
 	HWND g_fl_hwnd = NULL;
 
 	void Init()
@@ -68,18 +94,6 @@ namespace FL {
 
 	HWND getFL()
 	{
-		/*WNDENUMPROC isFLParam = [](HWND proc, LPARAM lParam) {
-			if (isFL(proc)) {
-				*(HWND*)lParam = proc;
-				return FALSE;
-			}
-
-			return TRUE;
-		};
-
-		HWND hwnd = NULL;
-		EnumWindows(isFLParam, (LPARAM)&hwnd);*/
-
 		return GetWinMatch(isFL);
 	}
 
@@ -151,7 +165,8 @@ namespace FL {
 
 	// Routines //
 
-	int CreateAutomationClip(HWND fl) {
+	int CreateAutomationClip(HWND fl) 
+	{
 		RECT winPos;
 		if (!GetWindowRect(fl, &winPos)) { return WRC_FAILURE; }
 
@@ -232,7 +247,8 @@ namespace FL {
 	}
 
 	// expects HWND to be foreground window
-	int DeactivateReachPlayback(HWND edison) {
+	int DeactivateReachPlayback(HWND edison) 
+	{
 		if (!DoDisableReachPlayback()) { return WRC_SUCCESS; }
 
 		if (!isEdison(edison)) { return WRC_NOTDETACHED; }
@@ -437,16 +453,51 @@ namespace FL {
 		w.rCode = WRC_SUCCESS;
 		return w;
 	}
+
+	// Colors //
+	POINT g_col_cPos = { 0, 0 };
+	bool  g_col_set  = false;
+	bool  g_col      = false;
+
+	bool OpenColorPane(HWND midi, bool col_set) 
+	{	
+		RECT win;
+		if (!GetWindowRect(midi, &win)) { return false; }
+
+		g_col_set = col_set;
+		if (!GetCursorPos(&g_col_cPos)) { return false; }
+
+		SetCursorPos(win.left, win.top);
+		MoveMouse(30, 60);
+		Click();
+
+		g_col = true;
+	}
+
+	bool CloseColorPane()
+	{
+		if (!g_col) return false;
+
+		SetCursorPos(g_col_cPos.x, g_col_cPos.y);
+
+		g_col_cPos = { 0, 0 };
+		g_col_set = false;
+		g_col = false;
+
+		return true;
+	}
 }
 
-bool IsClass(HWND hwnd, LPCTSTR classStr) {
+bool IsClass(HWND hwnd, LPCTSTR classStr) 
+{
 	TCHAR cName[MAX_CLASS_NAME];
 	if (GetClassName(hwnd, cName, MAX_CLASS_NAME) == 0) { return false; }
 
 	return _tcscmp(cName, classStr) == 0;
 }
 
-bool IsWinText(HWND hwnd, LPCTSTR textStr) {
+bool IsWinText(HWND hwnd, LPCTSTR textStr) 
+{
 	const int len = MAX_WIN_TEXT_LEN + 1;
 
 	TCHAR tstr[len];
@@ -456,7 +507,8 @@ bool IsWinText(HWND hwnd, LPCTSTR textStr) {
 	return isWin;
 }
 
-bool WinTextStartsWith(HWND hwnd, LPCTSTR textStr) {
+bool WinTextStartsWith(HWND hwnd, LPCTSTR textStr) 
+{
 	const int len = MAX_WIN_TEXT_LEN + 1;
 
 	TCHAR tstr[len];
@@ -466,7 +518,8 @@ bool WinTextStartsWith(HWND hwnd, LPCTSTR textStr) {
 	return isWin;
 }
 
-HWND GetWinMatch(bool (match)(HWND)) {
+HWND GetWinMatch(bool (match)(HWND)) 
+{
 	struct info {
 		bool (*match)(HWND);
 		HWND hwnd;

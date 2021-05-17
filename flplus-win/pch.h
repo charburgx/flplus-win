@@ -5,9 +5,6 @@
 #include <shellapi.h>
 #pragma comment (lib, "shell32.lib")
 
-#define UWM_SYS_MSG_FILTER_HOOK_MSG "UWM_SYS_MSG_FILTER-44E531B1_14D3_11d5_A025_006067718D04"
-#define UWM_CALL_WND_PROC_HOOK_MSG "UWM_CALL_WND_PROC-AEFD5BE9-B053-4d09-A353-D8B031C224B6"
-
 // Global constants
 const LPCTSTR FLPLUS_TITLE = _T("FL Plus");
 
@@ -80,4 +77,18 @@ const unsigned int FL_COLOR_EDISON_REACH_PLAYBACK_INACTIVE = 6904146;
 
 const LPCSTR REG_EDISON_REACH_PLAYBACK_LPVAL = "edisonDoDisableReachPlayback";
 
+// MIDI colors
+const int FL_HOTKEY_SET_COLOR_LEN = 2;
+const WORD FL_HOTKEY_SET_COLOR[FL_HOTKEY_SET_COLOR_LEN] = { VK_MENU, 0x43 };
+
+constexpr int HOTKEY_SET_COLOR_ID = 2;
+constexpr int HOTKEY_SET_COLOR_AFTER_ID = 3;
+constexpr int HOTKEY_CLOSE_COLOR_ID = 300;
+
+const UINT HOTKEY_SET_COLOR = 0x58; // X key
+const UINT HOTKEY_SET_COLOR_MOD = MOD_NOREPEAT;
+const UINT HOTKEY_SET_COLOR_AFTER = HOTKEY_SET_COLOR;
+const UINT HOTKEY_SET_COLOR_AFTER_MOD = MOD_NOREPEAT | MOD_SHIFT;
+
+// Helper functions
 inline HWND GetMainWindow(HWND hwnd) { return GetAncestor(hwnd, GA_ROOTOWNER); }

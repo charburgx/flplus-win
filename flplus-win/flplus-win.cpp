@@ -4,26 +4,22 @@
 #include <stdio.h>
 #include <string>
 
-// TODO: delete this
-UINT UWM_SYS_MSG_FILTER = 0;
-UINT UWM_CALL_WND_PROC = 0;
-
 const UINT WM_TRAY = WM_USER + 1;
 HINSTANCE g_hInst = NULL;
 HICON g_hIcon = NULL;
 HWINEVENTHOOK g_hook;
-
-//LPCTSTR szWindowClass = _T("FLPlusDummyWin");
-//LPCTSTR szFlyoutWindowClass = _T("FLPlusFlyout");
+HHOOK g_MouseHook;
+HHOOK g_KeyboardHook;
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 //LRESULT CALLBACK    FlyoutWndProc(HWND, UINT, WPARAM, LPARAM);
 void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
     LONG idObject, LONG idChild,
     DWORD dwEventThread, DWORD dwmsEventTime);
-
 void CALLBACK HandleWorkspaceSwitch(int i, HWND fl);
 void CALLBACK HandleWorkspaceSet(int i, HWND fl);
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 void LoadStringSafe(UINT nStrID, LPTSTR szBuf, UINT nBufLen)
 {
@@ -60,7 +56,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPTSTR
                     RegisterHotKey(NULL, HOTKEY_WORKSPACE_SWITCH_ID + i, HOTKEY_WORKSPACE_SWITCH_MODIFIERS, HOTKEY_WORKSPACE_SWITCH_KEYSTART + i);
                     RegisterHotKey(NULL, HOTKEY_WORKSPACE_SET_ID + i, HOTKEY_WORKSPACE_SET_MODIFIERS, HOTKEY_WORKSPACE_SET_KEYSTART + i);
                 }
-                
+
+                RegisterHotKey(NULL, HOTKEY_SET_COLOR_ID, HOTKEY_SET_COLOR_MOD, HOTKEY_SET_COLOR);
+                RegisterHotKey(NULL, HOTKEY_SET_COLOR_AFTER_ID, HOTKEY_SET_COLOR_AFTER_MOD, HOTKEY_SET_COLOR_AFTER);
+
                 MSG stMsg;
                 while (GetMessage(&stMsg, NULL, 0, 0) > 0) 
                 {
@@ -71,15 +70,32 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPTSTR
                     // Hotkeys
                     if (stMsg.message == WM_HOTKEY && FL::isFLChild(GetForegroundWindow()))
                     {
-                        HWND fl = GetMainWindow(GetForegroundWindow());
+                        HWND win = GetForegroundWindow();
+                        HWND fl = GetMainWindow(win);
 
                         switch (stMsg.wParam)
                         {
                         case HOTKEY_AUTOMATION_ID:
-                            {
+                        {
                             FL::CreateAutomationClip(fl);
                             break;
+                        }
+                        case HOTKEY_SET_COLOR_ID:
+                        {
+                            if (FL::isPianoRoll(win))
+                            {
+                                FL::OpenColorPane(win, false);
                             }
+                            break;
+                        }
+                        case HOTKEY_SET_COLOR_AFTER_ID:
+                        {
+                            if (FL::isPianoRoll(win))
+                            {
+                                FL::OpenColorPane(win, true);
+                            }
+                            break;
+                        }
                         default:
                         {
                         for (int i = 0; i < NUM_WORKSPACES; i++)
@@ -143,6 +159,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HandleWinEvent,          
                 0, 0,              
                 WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+
+            // Register windows hooks
+            g_MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, g_hInst, 0);
+            g_KeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, g_hInst, 0);
         }
         return 0;
 
@@ -263,4 +283,29 @@ void CALLBACK HandleWorkspaceSet(int i, HWND fl)
         WARNING_BOX(_T("Unsuccessful. Please report this to a developer."), NULL);
         break;
     }
+}
+
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) 
+{
+    PKBDLLHOOKSTRUCT k = (PKBDLLHOOKSTRUCT)(lParam);
+    POINT p;
+    
+    if (wParam == WM_LBUTTONUP || wParam == WM_RBUTTONUP)
+    {
+        FL::CloseColorPane();
+    }
+
+    return 0;
+}
+
+LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    PKBDLLHOOKSTRUCT k = (PKBDLLHOOKSTRUCT)(lParam);
+
+    if (wParam == WM_KEYDOWN )//&& k->vkCode != HOTKEY_SET_COLOR && k->vkCode != VK_LSHIFT && k->vkCode != VK_RSHIFT)
+    {
+        FL::CloseColorPane();
+    }
+
+    return 0;
 }

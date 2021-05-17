@@ -5,8 +5,9 @@
 
 BOOL MoveMouse(int dx, int dy);
 BOOL Click();
-BOOL SendKeystrokes(WORD* keys, int numKeys);
-BOOL SendKeystroke(WORD key);
+BOOL SendKeystrokes(const WORD* keys, int numKeys);
+BOOL SendKeystrokesSimul(const WORD* keys, int numKeys);
+inline BOOL SendKeystroke(const WORD key) { WORD keys[1] = { key }; return SendKeystrokes(keys, 1); }
 
 bool IsClass(HWND hwnd, LPCTSTR classStr);
 bool IsWinText(HWND hwnd, LPCTSTR textStr);
@@ -57,4 +58,7 @@ namespace FL {
 	Workspace GetWorkspace(HWND fl);
 	int SetWorkspaceReg(int i, Workspace w);
 	Workspace LoadWorkspaceReg(int i);
+
+	bool OpenColorPane(HWND midi, bool col_set);
+	bool CloseColorPane();
 }
