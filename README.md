@@ -1,6 +1,6 @@
 # FL Plus Windows
 
-This is the windows version of [FL Plus](http://flpl.us). Comes in support for 86 and 64 architectures.
+This is the windows version of [FL Plus](http://flpl.us). Comes in support for x86 and x64 architectures.
 
 # Usage
 
